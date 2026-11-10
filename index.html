@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>八方向挑戰</title>
+<style>
+/* 版面：開始頁選範圍；作答頁左邊圖、右邊題目及答案按鈕；窄屏時上下排列 */
+:root{
+  --paper:#F4F7F2; --panel:#FFFFFF; --ink:#1F2B2A; --muted:#5E706C; --line:#CBD8D0; --soft:#E7EEE8;
+  --ground:#EAF3E6; --road:#E8C682; --roadEdge:#D4AE62; --tile:#FFFFFF; --skin:#F4C9A2; --hair:#5B3A1E;
+  --arrow:#D9480F; --north:#D2392B; --ok:#23925A; --bad:#C63D2C; --accent:#2563D9;
+  --font:"PingFang HK","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#11191A; --panel:#1A2526; --ink:#E6EFEC; --muted:#9DB1AC; --line:#3B5152; --soft:#22302F;
+  --ground:#182421; --road:#6E5C36; --roadEdge:#8A7445; --tile:#24302F; --skin:#E8B88E; --hair:#3A2412;
+  --arrow:#FF8A4C; --north:#FF6A5A; --ok:#4CC584; --bad:#FF7A66; --accent:#6E9EFF; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#11191A; --panel:#1A2526; --ink:#E6EFEC; --muted:#9DB1AC; --line:#3B5152; --soft:#22302F;
+  --ground:#182421; --road:#6E5C36; --roadEdge:#8A7445; --tile:#24302F; --skin:#E8B88E; --hair:#3A2412;
+  --arrow:#FF8A4C; --north:#FF6A5A; --ok:#4CC584; --bad:#FF7A66; --accent:#6E9EFF; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--font);font-size:18px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.app{max-width:1180px;margin:0 auto;padding-block:16px 28px;display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:1.6rem;font-weight:900;margin:0}
+.prog{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.dots{display:flex;gap:4px;flex-wrap:wrap}
+.dots i{width:11px;height:11px;border-radius:50%;background:var(--line)}
+.dots i.ok{background:var(--ok)} .dots i.no{background:var(--bad)} .dots i.cur{background:var(--accent)}
+.home{font:inherit;font-weight:700;font-size:.95rem;border:2px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:6px 12px;cursor:pointer}
+.stage{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+.stage.nofig{grid-template-columns:minmax(0,720px);justify-content:center}
+@media (max-width:860px){.stage{grid-template-columns:1fr}}
+.figWrap{background:var(--ground);border-radius:22px;width:100%;position:relative}
+.figWrap svg{width:100%;height:auto;display:block;touch-action:manipulation}
+.road{stroke:var(--roadEdge);stroke-width:28;stroke-linecap:round}
+.road2{stroke:var(--road);stroke-width:22;stroke-linecap:round}
+.arw{stroke:var(--arrow);stroke-width:7;stroke-linecap:round;fill:none}
+.thin{stroke:var(--muted);stroke-width:8;stroke-linecap:round;opacity:.55}
+.rt{stroke-width:8;stroke-linecap:round;opacity:.9}.rt0{stroke:#2E7BD9}.rt1{stroke:#E8892B}
+.lt.sm{font-size:19px}
+.wedgeL{fill:color-mix(in srgb,var(--accent) 20%,transparent);stroke:var(--accent);stroke-width:3}
+.wedgeR{fill:color-mix(in srgb,var(--arrow) 22%,transparent);stroke:var(--arrow);stroke-width:3}
+.sqL{fill:none;stroke:var(--accent);stroke-width:4}.sqR{fill:none;stroke:var(--arrow);stroke-width:4}
+.wT{font-family:var(--font);font-weight:900;font-size:24px;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--ground);stroke-width:6px}
+.wT.L{fill:var(--accent)}.wT.R{fill:var(--arrow)}
+.hand{stroke:#2E9E5B;stroke-width:7;stroke-linecap:round}.handH{fill:#2E9E5B}
+.handT{fill:#2E9E5B;font-family:var(--font);font-weight:900;font-size:22px;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--ground);stroke-width:6px}
+.cap{fill:var(--ink);font-family:var(--font);font-weight:900;font-size:24px;text-anchor:middle}
+.steps{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px;font-size:1.2rem;line-height:1.6}
+.steps li.cur{font-weight:900;color:var(--accent)}.steps li.okS{color:var(--ok)}.steps li.noS{color:var(--bad)}
+.walk{stroke:#2E9E5B;stroke-width:6;stroke-linecap:round;fill:none}
+.ahd{fill:var(--arrow)} .ahw{fill:#2E9E5B}
+.place circle{fill:var(--tile);stroke:var(--line);stroke-width:3}
+.place .em{font-size:34px;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.place .lt{font-size:34px;font-weight:900;fill:var(--ink);font-family:var(--font);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.lbl{fill:var(--ink);font-family:var(--font);font-weight:900;font-size:20px;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--ground);stroke-width:6px;pointer-events:none}
+.tapping .place{cursor:pointer}
+.place.pick circle{stroke:var(--accent);stroke-width:6}
+.place.ok circle{stroke:var(--ok);stroke-width:7;fill:color-mix(in srgb,var(--ok) 18%,var(--tile))}
+.place.bad circle{stroke:var(--bad);stroke-width:7;fill:color-mix(in srgb,var(--bad) 16%,var(--tile))}
+.nArrow line{stroke:var(--ink);stroke-width:4}
+.nArrow path{fill:var(--ink)}
+.nT{fill:var(--north);font-family:var(--font);font-weight:900;font-size:26px;text-anchor:middle;dominant-baseline:central}
+.nArrow.new line{stroke:var(--arrow)} .nArrow.new path{fill:var(--arrow)}
+.ray{stroke:var(--ink);stroke-width:3;stroke-linecap:round}
+.cBody{fill:#2A3236;stroke:#8E989E;stroke-width:4}
+.cLite{fill:#DCEBF7;stroke:#8E989E;stroke-width:4}
+.cLbl{fill:#F2F5F6;font-family:var(--font);font-weight:900;text-anchor:middle;dominant-baseline:central}
+.cLbl.n{fill:#7CE38B}
+.cRed{fill:#E5392B;stroke:#8E1D14;stroke-width:1}.cWhite{fill:#FFFFFF;stroke:#5E6A70;stroke-width:1}
+.cCap{fill:#9AA4AA}
+.box{fill:var(--tile);stroke:var(--ink);stroke-width:2.5}
+.box.q{fill:color-mix(in srgb,var(--accent) 14%,var(--tile));stroke:var(--accent);stroke-width:4}
+.boxT{fill:var(--accent);font-family:var(--font);font-weight:900;font-size:26px;text-anchor:middle;dominant-baseline:central}
+.boxT.ans{fill:var(--ok)}
+.skin{fill:var(--skin);stroke:var(--hair);stroke-width:2}
+.hair{fill:var(--hair)}
+.eye{fill:#222}
+.nose{fill:#D98B5F}
+.gridL{stroke:var(--line);stroke-width:2}
+.pt{fill:var(--ink)}
+.ptT{fill:var(--accent);font-family:var(--font);font-weight:900;font-size:24px;text-anchor:middle;dominant-baseline:central}
+.mark{stroke:var(--ink);stroke-width:3.5}
+.bld{fill:var(--tile);stroke:var(--ink);stroke-width:2.5}
+.bldT{fill:var(--ink);font-family:var(--font);font-weight:900;font-size:22px;text-anchor:middle;dominant-baseline:central}
+.pool{fill:color-mix(in srgb,var(--accent) 12%,var(--tile));stroke:var(--muted);stroke-width:3}
+.fish{fill:var(--muted)}
+.poolT{fill:var(--ink);font-family:var(--font);font-weight:900;font-size:22px;text-anchor:middle}
+.qmark{fill:var(--accent);font-family:var(--font);font-weight:900;font-size:40px;text-anchor:middle;dominant-baseline:central}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.tag{font-size:.85rem;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.q{font-size:1.45rem;font-weight:700;line-height:1.85;margin:0}
+.blank{display:inline-block;min-width:3.2em;padding:0 .2em;border-bottom:3px solid var(--ink);text-align:center;color:var(--accent);font-weight:900;border-radius:6px 6px 0 0;cursor:pointer}
+.blank.act{background:color-mix(in srgb,var(--accent) 15%,transparent);border-bottom-color:var(--accent)}
+.blank.good,.blank.fix{color:var(--ok);border-bottom-color:var(--ok);cursor:default}
+.blank s{color:var(--bad);font-size:.8em;margin-right:.3em;text-decoration-thickness:3px}
+.hint{color:var(--muted);font-size:1rem;margin:0;line-height:1.6}
+.pad{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+button{font:inherit;font-weight:900;border:0;border-radius:14px;cursor:pointer}
+.pad button,.opts button{font-size:1.25rem;min-height:58px;background:var(--soft);color:var(--ink);padding:8px}
+.opts button svg{width:100%;max-width:120px;height:auto;display:block;margin:0 auto}
+.opts button .ol{display:block;font-size:1.1rem;margin-bottom:4px}
+.pad button.right,.opts button.right{background:var(--ok);color:#fff}
+.pad button.wrong,.opts button.wrong{background:var(--bad);color:#fff}
+.opts button.sel{background:color-mix(in srgb,var(--accent) 22%,var(--soft));outline:3px solid var(--accent)}
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+.btn{background:var(--soft);color:var(--ink);font-size:1.1rem;padding:14px 20px}
+.btn.main{background:var(--accent);color:#fff}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.fb{font-size:1.3rem;font-weight:900;line-height:1.55;margin:0}
+.fb.ok{color:var(--ok)} .fb.no{color:var(--bad)}
+.why{background:var(--soft);border-radius:12px;padding:12px 14px;font-size:1.05rem;line-height:1.7;margin:0}
+.menu{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px;width:100%}
+.menu p{margin:0;color:var(--muted);line-height:1.6}
+.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.cat{background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:16px;text-align:left;color:var(--ink);display:flex;flex-direction:column;gap:6px;min-height:110px}
+.cat b{font-size:1.25rem}
+.cat span{font-weight:500;color:var(--muted);font-size:.98rem;line-height:1.5}
+.cat.main{border-color:var(--accent)}
+.end{text-align:center;padding-block:20px;display:flex;flex-direction:column;gap:14px;align-items:center}
+.end .big{font-size:3rem;font-weight:900;font-variant-numeric:tabular-nums}
+</style>
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>八方向挑戰</h1>
+    <div class="prog" id="prog" hidden><span id="progTxt"></span><div class="dots" id="dots"></div><button class="home" id="homeBtn">回到主頁</button></div>
+  </header>
+  <div id="view"></div>
+</div>
+
+<script>
+// ================= 基本工具 =================
+const N=['北','東北','東','東南','南','西南','西','西北'];
+const m8=x=>((x%8)+8)%8;
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const pol=(cx,cy,deg,r)=>{const t=deg*Math.PI/180;return [+(cx+r*Math.sin(t)).toFixed(2),+(cy-r*Math.cos(t)).toFixed(2)]};
+const scrPos=['上面','右上方','右面','右下方','下面','左下方','左面','左上方'];
+
+// ================= 平面圖 =================
+// 坐標：x 向右、y 向下（畫面方向）。theta = 北方在畫面上的角度（0 = 上，90 = 右）
+const MAPS={
+ town:{nodes:{lib:[0,0,'圖書館','📚'],shop:[1,0,'便利店','🏪'],park:[2,0,'公園','🌳'],post:[0,1,'郵局','📮'],home:[1,1,'小明家','🏠'],gym:[2,1,'體育館','🏟️'],
+   hosp:[0,2,'醫院','🏥'],mkt:[1,2,'街市','🥬'],cine:[2,2,'戲院','🎬']},
+   roads:'lib-shop shop-park lib-post post-hosp hosp-mkt mkt-cine park-gym gym-cine shop-home home-mkt home-park post-mkt home-gym'},
+ mall:{nodes:{toy:[0,0,'玩具部','🧸'],A:[1,0,'A'],sport:[2,0,'運動部','⚽'],B:[3,0,'B'],book:[0,1,'書店','📚'],food:[1,1,'美食廣場','🍜'],C:[2,1,'C'],elec:[3,1,'電器部','📺'],
+   D:[0,2,'D'],info:[1,2,'詢問處','❓'],wc:[2,2,'洗手間','🚻'],shoe:[3,2,'鞋部','👟']},
+   roads:'toy-A A-sport sport-B book-food food-C C-elec D-info info-wc wc-shoe toy-book book-D A-food C-wc B-elec elec-shoe food-sport food-wc C-B book-info'},
+ camp:{nodes:{tent:[0,0,'營帳','⛺'],bbq:[1,0,'燒烤爐','🔥'],lake:[2,0,'湖邊','🛶'],arch:[0,1,'射箭場','🏹'],fire:[1,1,'營火','🪵'],wc:[2,1,'廁所','🚻'],
+   car:[0,2,'停車場','🅿️'],kiosk:[1,2,'小賣部','🍦'],bike:[2,2,'單車站','🚲']},
+   roads:'tent-bbq bbq-lake tent-arch arch-car car-kiosk kiosk-bike lake-wc wc-bike bbq-fire fire-kiosk arch-fire fire-lake arch-kiosk fire-bike'},
+ school:{nodes:{music:[0,0,'音樂室','🎵'],canteen:[2,0,'飯堂','🍱'],office:[1,1,'校務處','🏢'],garden:[3,1,'花園','🌷'],court:[0,2,'籃球場','🏀'],gate:[2,2,'校門','🚪']},
+   roads:'music-canteen music-office office-court office-gate canteen-garden garden-gate court-gate'},
+ zoo:{U:90,grid:[0,0,5,4],nodes:{ticket:[0,0,'售票處','🎫'],gate:[4,0,'大門','🚪'],monkey:[3,1,'猴子園','🐒'],bird:[4,2,'雀鳥館','🦜'],pond:[1,3,'荷花池','🪷'],hill:[2,4,'觀景台','🔭'],cafe:[5,4,'茶座','☕']},roads:''},
+ room:{thin:1,nodes:{A:[0,0,'A'],B:[1,0,'B'],C:[2,0,'C'],D:[3,0,'D'],E:[0,1,'E'],F:[1,1,'F'],kid:[2,1,'子朗','🧒'],G:[3,1,'G'],H:[0,2,'H'],I:[1,2,'I'],J:[2,2,'J'],K:[3,2,'K']},
+   roads:'A-B B-C C-D E-F F-kid kid-G H-I I-J J-K A-E E-H B-F F-I C-kid kid-J D-G G-K'},
+ star:{thin:1,nodes:{A:[0,0,'A'],B:[1,0,'B'],C:[2,0,'C'],D:[0,1,'D'],E:[1,1,'E'],home:[2,1,'志明家','🏠'],F:[0,2,'F'],G:[1,2,'G'],H:[2,2,'H']},
+   roads:'A-B B-C A-D D-F F-G G-H C-home home-H D-E E-home B-E E-G A-E E-C F-E E-H'},
+ harbor:{grid:[0,0,4,3],nodes:{tower:[3,0,'鐘樓','🕰️'],cafe:[0,1,'咖啡店','☕'],museum:[2,1,'博物館','🏛️'],ferry:[4,1,'碼頭','⛴️'],candy:[3,2,'糖果店','🍬'],book:[0,3,'書局','📖'],bank:[2,3,'銀行','🏦'],shop:[4,3,'超市','🛒']},
+   roads:'cafe-museum museum-ferry museum-tower tower-ferry museum-candy candy-ferry cafe-book book-bank bank-shop ferry-shop museum-bank'},
+ bot:{nodes:{A:[0,0,'A'],B:[1,0,'B'],C:[2,0,'C'],D:[0,1,'D'],E:[1,1,'E'],F:[2,1,'F']},
+   roads:'A-B B-C D-E E-F A-D C-F A-E E-C B-E'},
+};
+Object.values(MAPS).forEach(m=>{m.roadList=m.roads?m.roads.split(' ').map(r=>r.split('-')):[]});
+const nm=(m,k)=>MAPS[m].nodes[k][2];
+const isLetter=(m,k)=>!MAPS[m].nodes[k][3];
+const hasRoad=(m,a,b)=>MAPS[m].roadList.some(([p,q])=>(p===a&&q===b)||(p===b&&q===a));
+function bearing(dx,dy){return ((Math.atan2(dx,-dy)*180/Math.PI)+360)%360}
+function cdirXY(x1,y1,x2,y2,theta){const dx=x2-x1,dy=y2-y1;if(!(dx||dy))return -1;if(dx&&dy&&Math.abs(dx)!==Math.abs(dy))return -1;
+  return m8(Math.round((bearing(dx,dy)-theta)/45))}
+function cdir(m,theta,a,b){const A=MAPS[m].nodes[a],B=MAPS[m].nodes[b];return cdirXY(A[0],A[1],B[0],B[1],theta)}
+function rayHits(m,theta,from,d){return Object.keys(MAPS[m].nodes).filter(k=>k!==from&&cdir(m,theta,from,k)===d)}
+function stepNode(m,theta,k,d){const [x,y]=MAPS[m].nodes[k],a=(theta+d*45)*Math.PI/180,dx=Math.round(Math.sin(a)),dy=-Math.round(Math.cos(a));
+  return Object.keys(MAPS[m].nodes).find(j=>MAPS[m].nodes[j][0]===x+dx&&MAPS[m].nodes[j][1]===y+dy)||null}
+// 最短路線（沿道路，斜路較長）
+function allPaths(m,a,b){const out=[];const go=(cur,path)=>{if(cur===b){out.push(path.slice());return}
+  MAPS[m].roadList.forEach(([p,q])=>{const n=p===cur?q:q===cur?p:null;if(n&&!path.includes(n)){path.push(n);go(n,path);path.pop()}})};go(a,[a]);return out}
+function pathLen(m,p){let s=0;for(let i=1;i<p.length;i++){const A=MAPS[m].nodes[p[i-1]],B=MAPS[m].nodes[p[i]];s+=Math.hypot(A[0]-B[0],A[1]-B[1])}return s}
+function legs(m,theta,p){const ds=[];for(let i=1;i<p.length;i++){const d=cdir(m,theta,p[i-1],p[i]);if(ds[ds.length-1]!==d)ds.push(d)}return ds}
+function shortest(m,a,b){const ps=allPaths(m,a,b).map(p=>({p,L:pathLen(m,p)})).sort((x,y)=>x.L-y.L);
+  return {best:ps[0],unique:ps.length<2||ps[1].L-ps[0].L>1e-6,all:ps}}
+// 路線題（每段沿同一方向直走）
+function legsFrom(m,theta,k){const out=[];for(let d=0;d<8;d++){let cur=k;while(true){const c=cur,n=MAPS[m].roadList.map(([p,r])=>p===c?r:r===c?p:null).find(x=>x&&cdir(m,theta,c,x)===d);if(!n)break;cur=n;out.push({d,to:cur})}}return out}
+function routesAC(m,theta,A,C){const r=[];legsFrom(m,theta,A).forEach(l1=>legsFrom(m,theta,l1.to).forEach(l2=>{if(l2.to===C&&l2.d!==l1.d&&l1.to!==C)r.push({d1:l1.d,b:l1.to,d2:l2.d})}));return r}
+
+// ================= 題目 =================
+// 類別：turn 轉方向｜north 北方不在上面｜map 地圖找方向｜route 路線及最短路線｜adv 進階題
+const CATS={
+  turn:{t:'轉方向',d:'面向、左右方、向左／向右轉後面向哪方'},
+  north:{t:'北方不在上面',d:'北方指向左下、右下等時，找出其他方向'},
+  map:{t:'地圖找方向',d:'平面圖上找方向，包括沒有北方標誌的題目'},
+  route:{t:'路線及最短路線',d:'沿道路行走的方向，找出最短路線'},
+  adv:{t:'進階題',d:'規律、逆向思考等較難的題目'},
+};
+const Q=[];
+const add=o=>Q.push(o);
+const P=(name,face,theta,sign='arrow',dial)=>({type:'person',name,face,theta,sign,dial});
+
+// ---------- 轉方向 ----------
+add({cat:'turn',fig:P('子晴',1,90),text:'子晴面向[?]方。',type:'dir',ans:1,
+  why:'先找出北方：箭咀指向右面。由北方開始數，子晴面向東北方。'});
+add({cat:'turn',fig:P('家朗',7,270),text:'家朗的右方是[?]方。',type:'dir',ans:m8(7+2),
+  why:'家朗面向西北方。右方就是向右轉 1 個直角的方向，所以是東北方。'});
+add({cat:'turn',fig:P('曉彤',3,225),text:'曉彤向左轉 1 個直角後，會面向[?]方。',type:'dir',ans:m8(3-2),
+  why:'曉彤面向東南方，向左轉 1 個直角，會面向東北方。'});
+add({cat:'turn',fig:P('天佑',6,135),text:'天佑向右轉 2 個直角後，他的右手邊是[?]方。',type:'dir',ans:m8(6+4+2),
+  why:'天佑面向西方，向右轉 2 個直角後面向東方。面向東方時，右手邊是南方。'});
+add({cat:'turn',fig:null,text:'思穎面向西方。她向右轉 1 個直角後，她的左手邊是[?]方。',type:'dir',ans:m8(6+2-2),
+  why:'向右轉 1 個直角後，思穎面向北方。面向北方時，左手邊是西方，即是她原本面向的方向。'});
+add({cat:'turn',fig:null,text:'俊傑面向東南方。他向右轉 3 個直角後，會面向[?]方。',type:'dir',ans:m8(3+6),
+  why:'東南 → 西南 → 西北 → 東北。向右轉 3 個直角，會面向東北方。'});
+add({cat:'turn',fig:null,text:'向左轉 3 個直角，等於向右轉[?]個直角。',type:'choice',opts:['1','2','3'],ans:0,
+  why:'轉 4 個直角會回到原本的方向。向左轉 3 個直角，就等於向右轉 1 個直角。'});
+add({cat:'turn',fig:null,text:'芷晴面向北方。她先向左轉 1 個直角，再向右轉 2 個直角，現在面向[?]方。',type:'dir',ans:m8(0-2+4),
+  why:'北方向左轉 1 個直角是西方；西方再向右轉 2 個直角是東方。'});
+add({cat:'turn',fig:null,text:'浩然面向西北方。他向左轉[?]個直角後，會面向東北方。',type:'choice',opts:['1','2','3'],ans:2,
+  why:'西北 → 西南 → 東南 → 東北，向左轉了 3 個直角。（向右轉只需 1 個直角。）'});
+add({cat:'turn',fig:null,text:'嘉欣的後方是東北方，她面向[?]方。',type:'dir',ans:5,
+  why:'後方和面向的方向相差 2 個直角。東北方的相反方向是西南方。'});
+add({cat:'turn',fig:P('小傑',3,315),text:'爸爸在小傑的東北方。小傑要怎樣轉，才會面向爸爸？[?]',type:'choice',
+  opts:['向左轉 1 個直角','向右轉 1 個直角','向左轉 2 個直角','向右轉 2 個直角'],ans:0,
+  why:'小傑面向東南方。東南方向左轉 1 個直角，就是東北方。'});
+add({cat:'turn',fig:null,text:'智軒面向東方。老師叫他向左轉 1 個直角，他卻向右轉了 1 個直角。智軒現在面向[?]方，正確應該面向[?]方。',type:'dirs',ans:[4,0],
+  why:'東方向右轉 1 個直角是南方；向左轉 1 個直角才是北方。左右轉錯，方向會相差 2 個直角。'});
+
+// ---------- 北方不在上面 ----------
+const BX=(theta,box,sign='compass')=>({type:'boxes',theta,box,sign});
+add({cat:'north',fig:BX(135,315),text:'這是一個指南針。左上方的方格應填[?]方。',type:'dir',ans:m8((315-135)/45),
+  why:'紅色指針指向右下方，那就是北方。左上方和北方相反，所以是南方。'});
+add({cat:'north',fig:BX(225,90),text:'這是一個指南針。右面的方格應填[?]方。',type:'dir',ans:m8((90-225)/45),
+  why:'紅色指針指向左下方，那就是北方。由北方向右（順時針）數到右面的方格，是西南方。'});
+add({cat:'north',fig:BX(270,180),text:'這是一個指南針。下面的方格應填[?]方。',type:'dir',ans:m8((180-270)/45),
+  why:'紅色指針指向左面，那就是北方。由北方順時針轉到下面，要轉 3 個直角（北 → 東 → 南 → 西），所以是西方。'});
+add({cat:'north',fig:BX(135,0,'arrow'),text:'平面圖的北方指向右下方。平面圖的上方是[?]方。',type:'dir',ans:m8((0-135)/45),
+  why:'北方在右下方，所以左上方是南方。上方在左上方再順時針轉半個直角的位置，由南方再轉半個直角是西南方。'});
+add({cat:'north',fig:BX(225,45,'arrow'),text:'平面圖的北方指向左下方。平面圖的右上方是[?]方。',type:'dir',ans:m8((45-225)/45),
+  why:'右上方和左下方剛好相反。北方在左下方，所以右上方是南方。'});
+add({cat:'north',fig:BX(270,45,'arrow'),text:'平面圖的北方指向左面。平面圖的右上方是[?]方。',type:'dir',ans:m8((45-270)/45),
+  why:'北方在左面，所以右面是南方、上面是東方。右上方在東方和南方之間，是東南方。'});
+add({cat:'north',fig:P('志強',4,45,'compassDial'),text:'志強面向[?]方。',type:'dir',ans:4,
+  why:'指南針的紅色指針指向右上方，那就是北方。志強面向左下方，和北方相反，所以面向南方。'});
+add({cat:'north',fig:P('凱晴',3,315,'compassOff',180),text:'凱晴面向[?]方。',type:'dir',ans:3,
+  why:'留意指南針上的「北」字沒有和紅色指針重疊，要看紅色指針。紅色指針指向左上方，所以凱晴（面向右面）面向東南方。'});
+add({cat:'north',fig:{type:'bldg',a:['星光大廈',-1,0],b:['綠茵樓',1,0]},text:'星光大廈在綠茵樓的西北方。以下哪一個是這幅圖的指南針？[?]',type:'choice',
+  compassOpts:[315,45,135,225],ans:0,why:'星光大廈在綠茵樓的左面，所以左面是西北方。由西北方順時針轉半個直角就是北方，所以北方在左上方。'});
+add({cat:'north',fig:{type:'bldg',a:['書店',0,-1],b:['銀行',0,1]},text:'書店在銀行的東方。以下哪一個是這幅圖的指南針？[?]',type:'choice',
+  compassOpts:[90,0,270,180],ans:2,why:'書店在銀行的上面，所以上面是東方。北方在東方向左轉 1 個直角的位置，即左面。'});
+add({cat:'north',fig:{type:'map',m:'town',theta:135,sign:'arrow'},text:'戲院在醫院的[?]方。',type:'dir',a:'cine',b:'hosp',
+  why:null});
+add({cat:'north',fig:{type:'map',m:'town',theta:225,sign:'compass'},text:'[?]在小明家的西方。',type:'tap',y:'home',d:6,why:null});
+
+// ---------- 地圖找方向 ----------
+add({cat:'map',fig:{type:'map',m:'town',theta:0,sign:'arrow'},text:'圖書館在小明家的[?]方。',type:'dir',a:'lib',b:'home',why:null});
+add({cat:'map',fig:{type:'map',m:'town',theta:45,sign:'arrow'},text:'戲院在圖書館的[?]方。',type:'dir',a:'cine',b:'lib',why:null});
+add({cat:'map',fig:{type:'map',m:'town',theta:90,sign:'arrow'},text:'[?]在街市的西北方。',type:'tap',y:'mkt',d:7,why:null});
+add({cat:'map',fig:{type:'map',m:'town',theta:0,sign:'arrow'},text:'哪個地方在郵局的東北方，也在體育館的西北方？[?]',type:'tap2',c:[['post',1],['gym',7]],why:null});
+add({cat:'map',fig:{type:'map',m:'town',theta:0,sign:'arrow'},text:'以下哪兩個地方都在醫院的東北方？[?]',type:'pick2',y:'hosp',d:1,optKeys:['home','park','shop','gym'],why:null});
+add({cat:'map',fig:{type:'map',m:'mall',theta:null,clue:['book','food',0]},text:'[CLUE]運動部在洗手間的[?]方。',type:'dir',a:'sport',b:'wc',why:null});
+add({cat:'map',fig:{type:'map',m:'mall',theta:null,clue:['elec','shoe',6]},text:'[CLUE]由運動部向北方走，便可到達升降機。升降機在哪個位置？[?]',type:'choice',opts:['A','B','C','D'],
+  solve:f=>['A','B','C','D'].indexOf(rayHits('mall',f.theta,'sport',0)[0]),why:null});
+add({cat:'map',fig:{type:'map',m:'camp',theta:null,clue:['fire','lake',1]},text:'[CLUE]停車場在射箭場的[?]方。',type:'dir',a:'car',b:'arch',why:null});
+add({cat:'map',fig:{type:'map',m:'camp',theta:null,clue:['kiosk','wc',0]},text:'[CLUE][?]在小賣部的東方。',type:'tap',y:'kiosk',d:2,why:null});
+add({cat:'map',fig:{type:'map',m:'mall',theta:180,sign:'compass'},text:'文具部在美食廣場的東北方，也在詢問處的東方。文具部在哪個位置？[?]',type:'choice',opts:['A','B','C','D'],
+  solve:f=>['A','B','C','D'].indexOf(rayHits('mall',f.theta,'food',1).find(k=>rayHits('mall',f.theta,'info',2).includes(k))),why:null});
+// 較難：句子給出兩個地方的方向，圖上沒有北方標誌
+add({cat:'map',hard:1,fig:{type:'map',m:'school',theta:null,clue:['court','music',2]},text:'校門的[?]方是校務處。',type:'dir',a:'office',b:'gate',rev:1,why:null});
+add({cat:'map',hard:1,fig:{type:'map',m:'school',theta:null,clue:['court','music',2]},text:'',type:'route',A:'music',C:'garden',tpl:'none',why:null});
+add({cat:'map',hard:1,fig:{type:'map',m:'school',theta:null,clue:['gate','court',7]},text:'[?]在校門的西南方。',type:'tap',y:'gate',d:5,why:null});
+add({cat:'map',hard:1,fig:{type:'map',m:'town',theta:null,clue:['post','hosp',2]},text:'戲院的[?]方是小明家。',type:'dir',a:'home',b:'cine',rev:1,why:null});
+add({cat:'map',hard:1,fig:{type:'map',m:'camp',theta:null,clue:['tent','fire',4]},text:'',type:'short',A:'lake',C:'arch',who:'表姐',why:null});
+add({cat:'map',hard:1,fig:{type:'map',m:'mall',theta:null,clue:['shoe','wc',6]},text:'哪個地方在運動部的西北方，也在美食廣場的西方？[?]',type:'tap2',c:[['sport',7],['food',6]],why:null});
+add({cat:'map',fig:{type:'grid',w:7,h:6,mark:['燈塔',3,2],pts:{P:[5,4],Q:[1,0],R:[5,0],S:[1,4]},theta:90},
+  text:'子軒去行山，測得燈塔在他的西南方。他可能在圖中的哪個位置？[?]',type:'choice',opts:['P','Q','R','S'],
+  solve:f=>['P','Q','R','S'].findIndex(k=>cdirXY(...f.pts[k],f.mark[1],f.mark[2],f.theta)===5),
+  why:'北方指向右面，所以西南方在左上方。燈塔要在子軒的左上方，子軒就在燈塔的右下方，即 P。'});
+
+// ---------- 路線及最短路線 ----------
+add({cat:'route',fig:{type:'map',m:'town',theta:90,sign:'arrow'},text:'',type:'route',A:'lib',C:'gym',tpl:'b',pick:{b:'shop'},why:null});
+add({cat:'route',fig:{type:'map',m:'town',theta:180,sign:'arrow'},text:'',type:'route',A:'hosp',C:'park',tpl:'none',why:null});
+add({cat:'route',fig:{type:'map',m:'mall',theta:270,sign:'arrow'},text:'',type:'route',A:'info',C:'elec',tpl:'none',why:null});
+add({cat:'route',fig:{type:'map',m:'mall',theta:225,sign:'arrow'},text:'爸爸由玩具部一直向[?]方走，便可到達 B。',type:'dir',a:'B',b:'toy',why:null});
+add({cat:'route',fig:{type:'map',m:'mall',theta:0,sign:'arrow',walk:['book','food']},text:'婷婷沿綠色箭咀的方向，由書店走到美食廣場。她再向[?]方走，便可到達運動部。',type:'dir',a:'sport',b:'food',why:null});
+add({cat:'route',fig:{type:'map',m:'mall',theta:0,sign:'arrow'},text:'',type:'short',A:'sport',C:'wc',who:'媽媽',why:null});
+add({cat:'route',fig:{type:'map',m:'town',theta:315,sign:'arrow'},text:'',type:'short',A:'lib',C:'cine',who:'小明',why:null});
+add({cat:'route',fig:{type:'map',m:'camp',theta:90,sign:'compass'},text:'',type:'short',A:'bbq',C:'bike',who:'哥哥',why:null});
+add({cat:'route',fig:{type:'map',m:'camp',theta:270,sign:'arrow'},text:'',type:'agree',A:'lake',C:'kiosk',who:'子謙',wrong:true,why:null});
+add({cat:'route',fig:{type:'map',m:'mall',theta:45,sign:'arrow'},text:'',type:'agree',A:'food',C:'shoe',who:'嘉怡',wrong:false,why:null});
+
+// ---------- 進階題 ----------
+add({cat:'adv',fig:{type:'map',m:'bot',theta:135,sign:'compass',robot:['D','E','C','F']},text:'',type:'robot',why:null});
+add({cat:'adv',fig:null,text:'公園在學校的北方，圖書館在學校的東方，而公園和圖書館跟學校的距離一樣。公園在圖書館的[?]方。',type:'dir',ans:7,
+  why:'先畫出學校，公園在學校上面（北方），圖書館在學校右面（東方）。由圖書館望向公園，要向上再向左，所以公園在圖書館的西北方。'});
+add({cat:'adv',fig:null,text:'書店在超市的西方，超市在銀行的南方，而書店和超市、超市和銀行的距離一樣。銀行在書店的[?]方。',type:'dir',ans:1,
+  why:'先畫出超市。書店在超市的左面（西方），銀行在超市的上面（超市在銀行的南方，即是銀行在超市的北方）。由書店望向銀行，要向上再向右，所以銀行在書店的東北方。'});
+add({cat:'adv',fig:null,text:'穎琳面向東北方。她每次向右轉 1 個直角，一共轉了 5 次，現在面向[?]方。',type:'dir',ans:m8(1+10),
+  why:'轉 4 次會回到東北方，所以轉 5 次等於只轉 1 次：東北方向右轉 1 個直角是東南方。'});
+add({cat:'adv',fig:null,text:'俊朗面向南方。他先向右轉 3 個直角，再向左轉 1 個直角，現在面向[?]方。',type:'dir',ans:m8(4+6-2),
+  why:'向右轉 3 個直角再向左轉 1 個直角，等於向右轉 2 個直角。南方向右轉 2 個直角是北方。'});
+
+// ---------- 新增：針對單元工作紙常見錯誤 ----------
+// 轉方向：左右手邊、向後轉
+add({cat:'turn',fig:P('明輝',5,180),text:'明輝向左轉 1 個直角後，他的右手邊是[?]方。',type:'dir',ans:m8(5-2+2),anim:{face:5,steps:[[-1,1]],hand:'R'},
+  why:'明輝面向西南方，向左轉 1 個直角後面向東南方。面向東南方時，右手邊是西南方。'});
+add({cat:'turn',fig:null,text:'琪琪面向東北方，她向右轉[?]個直角後，會面向西北方。',type:'choice',opts:['1','2','3','4'],ans:2,anim:{name:'琪琪',face:1,steps:[[1,3]]},
+  why:'東北 → 東南 → 西南 → 西北，向右轉了 3 個直角。'});
+add({cat:'turn',fig:null,text:'樂兒面向南方，她的左手邊是[?]方。',type:'dir',ans:2,anim:{name:'樂兒',face:4,steps:[],hand:'L'},
+  why:'很多同學會答西方，因為圖上西方在左面。但樂兒面向南方（向下），她的左手邊其實在圖的右面，即是東方。可以想像自己轉身面向南方再舉起左手。'});
+add({cat:'turn',fig:null,text:'子謙面向西南方。他向右轉 2 個直角（向後轉）後，他的左手邊是[?]方。',type:'dir',ans:m8(5+4-2),anim:{name:'子謙',face:5,steps:[[1,2]],hand:'L'},
+  why:'向後轉後子謙面向東北方。面向東北方時，左手邊是西北方。'});
+// 北方不在上面：「也在」、選兩個答案（方格圖，沒有道路）
+add({cat:'map',fig:{type:'map',m:'zoo',theta:180,sign:'arrow'},text:'以下哪兩個地方在大門的東北方？[?]',type:'pick2',y:'gate',d:1,optKeys:['monkey','bird','pond','hill'],why:null});
+add({cat:'map',fig:{type:'map',m:'zoo',theta:180,sign:'arrow'},text:'雀鳥館在大門的[?]方，也在猴子園的[?]方。',type:'dir2',a:'bird',refs:['gate','monkey'],why:null});
+add({cat:'map',fig:{type:'map',m:'zoo',theta:180,sign:'arrow'},text:'觀景台在荷花池的[?]方，也在茶座的[?]方。',type:'dir2',a:'hill',refs:['pond','cafe'],why:null});
+// 把物件放在方格內（句子一句接一句）
+add({cat:'map',hard:1,fig:{type:'map',m:'room',theta:180,sign:'compassDial'},text:'根據以下句子，把物件逐一放在圖中適當的方格內。',type:'seq',steps:[
+  {say:'子朗的北方有一個衣櫃。',name:'衣櫃',conds:[['kid',0]]},
+  {say:'子朗的東南方有一張書桌。',name:'書桌',conds:[['kid',3]]},
+  {say:'魚缸在衣櫃的西方，也在子朗的西北方。',name:'魚缸',conds:[['衣櫃',6],['kid',7]]}],why:null});
+add({cat:'map',hard:1,fig:{type:'map',m:'star',theta:315,sign:'arrow'},text:'根據以下句子，把設施逐一放在圖中適當的方格內。',type:'seq',steps:[
+  {say:'志明家的西方是圖書館。',name:'圖書館',conds:[['home',6]]},
+  {say:'郵局在志明家的西北方，也在圖書館的北方。',name:'郵局',conds:[['home',7],['圖書館',0]]},
+  {say:'超市在郵局的東方，也在志明家的北方。',name:'超市',conds:[['郵局',2],['home',0]]}],why:null});
+add({cat:'map',hard:1,fig:{type:'map',m:'harbor',theta:null,clue:['ferry','candy',2]},text:'博物館在[?]的東南方，又在[?]的西方。',type:'taps',subj:'museum',dirs:[3,6],
+  note:'留意句子的主角是博物館：要找的是「誰」的東南方是博物館。',why:null});
+// 最短路線：方向少不等於路短
+add({cat:'route',hard:1,fig:{type:'map',m:'harbor',theta:null,clue:['ferry','candy',2]},text:'',type:'pathfill',A:'book',C:'tower',who:'伯伯',why:null});
+add({cat:'route',fig:{type:'map',m:'town',theta:45,sign:'arrow'},text:'',type:'compare',routes:[['hosp','post','lib','shop','park'],['hosp','mkt','home','park']],
+  note:'路線甲只用了 2 個方向，但走的路較長。最短路線不是看用了多少個方向，而是看走了多遠。',why:null});
+add({cat:'route',fig:{type:'map',m:'harbor',theta:90,sign:'compass'},text:'',type:'compare',routes:[['book','bank','shop','ferry','tower'],['book','cafe','museum','tower']],
+  note:'兩條路線都用了 3 個方向，但路線甲兜了一個大圈。方向數目一樣，也要比較走了多遠。',why:null});
+add({cat:'route',fig:{type:'map',m:'town',theta:270,sign:'arrow'},text:'',type:'compare',routes:[['cine','mkt','hosp','post','lib'],['cine','mkt','post','lib']],
+  note:'路線乙在街市走斜路到郵局，比沿兩條直路經醫院繞過去短。',why:null});
+// 轉向面向某點（方格圖）
+add({cat:'adv',fig:{type:'grid',w:6,h:6,mark:['家豪',3,3],pts:{P:[3,5],Q:[5,3],R:[1,1],S:[5,5]},theta:225},
+  text:'家豪原本面向東北方。他向右轉多少個直角後，會面向 P 點？[?]',type:'choice',opts:['1 個','2 個','3 個','4 個'],
+  solve:f=>{const d=cdirXY(f.mark[1],f.mark[2],...f.pts.P,f.theta),k=m8(d-1)/2;return k===0?3:k-1},
+  why:'北方在左下方，所以 P 點（家豪的下面）在西北方。東北 → 東南 → 西南 → 西北，向右轉了 3 個直角。'});
+
+// 轉方向題目的動畫設定
+const ANIM=[['子晴面向',{face:1,steps:[]}],['家朗的右方',{face:7,steps:[],hand:'R'}],['曉彤向左轉',{face:3,steps:[[-1,1]]}],['天佑向右轉',{face:6,steps:[[1,2]],hand:'R'}],
+ ['思穎面向西方',{name:'思穎',face:6,steps:[[1,1]],hand:'L'}],['俊傑面向東南方',{name:'俊傑',face:3,steps:[[1,3]]}],['向左轉 3 個直角，等於',{name:'',face:0,steps:[[-1,3]]}],
+ ['芷晴面向北方',{name:'芷晴',face:0,steps:[[-1,1],[1,2]]}],['浩然面向西北方',{name:'浩然',face:7,steps:[[-1,3]]}],['嘉欣的後方',{name:'嘉欣',face:5,steps:[],hand:'B'}],
+ ['爸爸在小傑',{face:3,steps:[[-1,1]]}],['智軒面向東方',{name:'智軒',face:2,steps:[[1,1]]}],['穎琳面向東北方',{name:'穎琳',face:1,steps:[[1,5]]}],['俊朗面向南方',{name:'俊朗',face:4,steps:[[1,3],[-1,1]]}],
+ ['志強面向',{face:4,steps:[]}]];
+ANIM.forEach(([t,a])=>{const x=Q.find(z=>z.text.startsWith(t));if(x&&!x.anim)x.anim=a});
+
+// ================= 解題：計算答案和說明 =================
+function prep(q){
+  const f=q.fig;
+  if(f&&f.type==='map'&&f.clue){ // 由線索推斷北方
+    const [p,r,d]=f.clue;const A=MAPS[f.m].nodes[r],B=MAPS[f.m].nodes[p];
+    f.theta=m8(Math.round((bearing(B[0]-A[0],B[1]-A[1])-d*45)/45))*45;
+    q.clueText=`下圖沒有北方標誌，但${nm(f.m,p)}在${nm(f.m,r)}的${N[d]}方。`;
+    f.sign='none';
+  }
+  if(q.text.includes('[CLUE]'))q.text=q.text.replace('[CLUE]','');
+  const tip=f&&f.type==='map'?northTip(f):'';
+  if(q.type==='dir'&&q.a){q.ans=cdir(f.m,f.theta,q.b,q.a);
+    q.why=q.why||`${tip}${nm(f.m,q.a)}在${nm(f.m,q.b)}的${N[q.ans]}方`+(q.rev?`，即是${nm(f.m,q.b)}的${N[q.ans]}方是${nm(f.m,q.a)}。`:'。');q.arrows=[[q.b,q.a]];q.hl=[q.a]}
+  if(q.type==='tap'){const h=rayHits(f.m,f.theta,q.y,q.d);q.ans=h[0];q.check=h.length===1;
+    q.why=q.why||`${tip}${nm(f.m,q.ans)}在${nm(f.m,q.y)}的${N[q.d]}方。`;q.arrows=[[q.y,q.ans]]}
+  if(q.type==='tap2'){const [c1,c2]=q.c,h=rayHits(f.m,f.theta,c1[0],c1[1]).filter(k=>rayHits(f.m,f.theta,c2[0],c2[1]).includes(k));
+    q.ans=h[0];q.check=h.length===1;q.type='tap';
+    q.why=q.why||`${tip}${nm(f.m,q.ans)}在${nm(f.m,c1[0])}的${N[c1[1]]}方，也在${nm(f.m,c2[0])}的${N[c2[1]]}方。`;q.arrows=[[c1[0],q.ans],[c2[0],q.ans]]}
+  if(q.type==='pick2'){q.ansSet=rayHits(f.m,f.theta,q.y,q.d);q.opts=q.optKeys.map(k=>nm(f.m,k));q.check=q.ansSet.length===2&&q.ansSet.every(k=>q.optKeys.includes(k));
+    q.why=q.why||`${tip}由${nm(f.m,q.y)}向${N[q.d]}方畫一條直線，線上有${q.ansSet.map(k=>nm(f.m,k)).join('和')}。`;q.arrows=q.ansSet.map(k=>[q.y,k])}
+  if(q.solve){q.ans=q.solve(f);q.check=q.ans>=0;
+    if(!q.why){const k=q.opts[q.ans];q.why=`${tip}答案是 ${k}。`;q.hl=[k]}}
+  if(q.type==='route'){const v=routesAC(f.m,f.theta,q.A,q.C);q.check=v.length>0;
+    const r=(q.pick&&v.find(x=>Object.entries(q.pick).every(([k,val])=>x[k]===val)))||v[0];q.r=r;if(!r){q.valid=[];return q}
+    const fixed=q.tpl==='none'?[]:[q.tpl];
+    q.blanks={none:[['d','d1'],['p','b'],['d','d2']],b:[['d','d1'],['d','d2']]}[q.tpl];
+    q.valid=v.filter(x=>fixed.every(k=>x[k]===r[k]));q.vals={};q.act=0;
+    q.why=q.why||tip}
+  if(q.type==='short'){const s=shortest(f.m,q.A,q.C);q.check=s.unique;q.path=s.best.p;q.ans=legs(f.m,f.theta,s.best.p);
+    q.text=`${q.who}以最短的路線由${nm(f.m,q.A)}走到${nm(f.m,q.C)}。所行走的方向是：`+q.ans.map(()=>'[?]方').join(' → ');
+    q.type='dirs';q.arrows=pairs(q.path);
+    q.why=`${tip}最短路線是：${q.path.map(k=>nm(f.m,k)).join(' → ')}。斜路比沿直路繞過去短，所以要盡量走斜路，少轉彎。`}
+  if(q.type==='agree'){const s=shortest(f.m,q.A,q.C);q.check=s.unique;q.path=s.best.p;const d0=cdir(f.m,f.theta,q.A,q.path[1]);
+    let claim=d0;
+    if(q.wrong){const alt=s.all.find(x=>cdir(f.m,f.theta,q.A,x.p[1])!==d0);claim=cdir(f.m,f.theta,q.A,alt.p[1]);q.check=q.check&&!!alt}
+    q.text=`${q.who}想以最短的路線由${nm(f.m,q.A)}走到${nm(f.m,q.C)}，認為要先向${N[claim]}方出發。你同意嗎？[?]`;
+    q.type='choice';q.opts=['同意','不同意'];q.ans=q.wrong?1:0;q.arrows=pairs(q.path);
+    q.why=`${tip}最短路線是：${q.path.map(k=>nm(f.m,k)).join(' → ')}，要先向${N[d0]}方出發。`+(q.wrong?`先向${N[claim]}方出發的路線比較長。`:'')}
+  if(q.type==='robot'){const p=f.robot,ds=legs(f.m,f.theta,p);q.check=ds.length===p.length-1&&p.slice(1).every((k,i)=>hasRoad(f.m,p[i],k));
+    q.text=`機械人依以下的次序，由某點走到 ${p[p.length-1]} 點：${ds.map(d=>N[d]+'方').join(' → ')}。機械人由哪一點出發？[?]`;
+    q.type='choice';q.opts=Object.keys(MAPS[f.m].nodes).filter(k=>k!==p[p.length-1]);q.ans=q.opts.indexOf(p[0]);q.arrows=pairs(p);
+    q.why=`${tip}由 ${p[p.length-1]} 點倒轉方向走回去：${ds.slice().reverse().map(d=>N[m8(d+4)]+'方').join(' → ')}，便會回到 ${p[0]} 點。`}
+  if(q.type==='pattern'){const steps=3;q.ans=m8(f.given+steps*f.step/45);
+    q.text=`以下噴水池中各有一個魚雕像，依規律轉動。噴水池 A 的魚頭指向${N[f.given]}方。噴水池 D 的魚頭指向[?]方。`;q.type='dir';
+    q.why=`每個魚雕像都比前一個${f.step>0?'順時針':'逆時針'}轉了${Math.abs(f.step)===90?' 1 個直角':'半個直角'}。由 A 到 D 轉了 3 次，一共${f.step>0?'向右':'向左'}轉了${Math.abs(f.step)===90?' 3 個直角':' 3 次半個直角'}，由${N[f.given]}方轉到${N[q.ans]}方。`}
+  if(q.type==='choice'&&q.compassOpts){q.opts=q.compassOpts.map((t,i)=>({svg:compassMini(t),l:'ABCD'[i]}));
+    const fa=q.fig.a,fb=q.fig.b;q.check=true}
+  if(q.type==='dir2'){const a=q.a,[r1,r2]=q.refs;q.ans=q.refs.map(b=>cdir(f.m,f.theta,b,a));q.check=q.ans.every(d=>d>=0);q.type='dirs';q.arrows=q.refs.map(b=>[b,a]);q.hl=[a];
+    q.why=tip+`${nm(f.m,a)}在${nm(f.m,r1)}的${N[q.ans[0]]}方，也在${nm(f.m,r2)}的${N[q.ans[1]]}方。留意「也在」前面的主角仍然是${nm(f.m,a)}：要看${nm(f.m,a)}在${nm(f.m,r2)}的哪方，不是${nm(f.m,r2)}在${nm(f.m,r1)}的哪方。`}
+  if(q.anim&&!q.fig)q.animFig=P(q.anim.name||'',q.anim.face,0);
+  if(q.type==='seq'){const placed={};q.check=true;
+    q.steps.forEach(sp=>{const cand=Object.keys(MAPS[f.m].nodes).filter(k=>isLetter(f.m,k)&&!Object.values(placed).includes(k)&&
+        sp.conds.every(([ref,d])=>cdir(f.m,f.theta,placed[ref]||ref,k)===d));
+      sp.ans=cand.length===1?cand[0]:null;if(!sp.ans)q.check=false;placed[sp.name]=sp.ans;
+      sp.why=sp.conds.map(([ref,d])=>`${sp.name}在${placed[ref]?ref:nm(f.m,ref)}的${N[d]}方`).join('，也')});
+    q.why=q.why||tip}
+  if(q.type==='taps'){const S=q.subj;q.sets=q.dirs.map(d=>Object.keys(MAPS[f.m].nodes).filter(k=>k!==S&&cdir(f.m,f.theta,k,S)===d));
+    q.check=q.sets.every(x=>x.length>=1);q.blanks=q.dirs.map(()=>'p');
+    q.seqs=q.sets.reduce((acc,set)=>acc.flatMap(a=>set.map(k=>[...a,k])),[[]]);q.type='mix';
+    q.why=q.why||tip+q.sets.map((set,i)=>`${nm(f.m,S)}在${set.map(k=>nm(f.m,k)).join('或')}的${N[q.dirs[i]]}方`).join('；')+'。'+(q.note||'');
+    q.mkArrows=v=>v.map(k=>[k,S])}
+  if(q.type==='pathfill'){const s2=shortest(f.m,q.A,q.C),L=s2.best.L,best=s2.all.filter(x=>Math.abs(x.L-L)<1e-6).map(x=>x.p);
+    q.check=best.every(p=>p.length===best[0].length);q.paths=best;
+    const n=best[0].length;q.blanks=[];q.seqs=best.map(p=>{const v=[];for(let i=1;i<n;i++){v.push(cdir(f.m,f.theta,p[i-1],p[i]));if(i<n-1)v.push(p[i])}return v});
+    for(let i=1;i<n;i++){q.blanks.push('d');if(i<n-1)q.blanks.push('p')}
+    let t=`${q.who}以最短的路線由${nm(f.m,q.A)}前往${nm(f.m,q.C)}。寫出一條可行的路線：<br>${nm(f.m,q.A)}`;
+    for(let i=1;i<n;i++){t+=` →（[?]方）→ `+(i<n-1?'[?]':nm(f.m,q.C))}
+    q.text=t;q.type='mix';
+    q.why=tip+`最短的路線有 ${best.length} 條：`+best.map(p=>p.map(k=>nm(f.m,k)).join(' → ')).join('；或 ')+'。用的方向數目不重要，要比較走的路有多長。';
+    q.mkArrows=v=>{const p=[q.A,...v.filter((x,i)=>i%2===1),q.C];return pairs(p)}}
+  if(q.type==='compare'){const [a,b]=q.routes,La=pathLen(f.m,a),Lb=pathLen(f.m,b);
+    const cnt=p=>{let S=0,D=0;for(let i=1;i<p.length;i++){const A=MAPS[f.m].nodes[p[i-1]],B=MAPS[f.m].nodes[p[i]],dx=Math.abs(A[0]-B[0]),dy=Math.abs(A[1]-B[1]);if(dx&&dy)D+=dx;else S+=dx+dy}return [S,D]};
+    const [Sa,Da]=cnt(a),[Sb,Db]=cnt(b);
+    q.text=`由${nm(f.m,a[0])}到${nm(f.m,a[a.length-1])}有兩條路線：<br>路線甲（藍色）：${legs(f.m,f.theta,a).map(d=>N[d]+'方').join(' → ')}<br>路線乙（橙色）：${legs(f.m,f.theta,b).map(d=>N[d]+'方').join(' → ')}<br>哪一條路線較短？[?]`;
+    q.type='choice';q.opts=['路線甲','路線乙','一樣長'];q.ans=Math.abs(La-Lb)<1e-6?2:La<Lb?0:1;q.check=true;
+    const desc=(n,S2,D2)=>`${n}走了${S2?` ${S2} 格直路`:''}${S2&&D2?'和':''}${D2?` ${D2} 格斜路`:''}`;
+    q.why=tip+desc('路線甲',Sa,Da)+'；'+desc('路線乙',Sb,Db)+'。一格斜路（正方形的對角）比一格直路長一點，但比兩格直路短。'+(q.note||'');
+    q.showRoutes=[{p:a},{p:b}]}
+  if(q.check===undefined)q.check=true;
+  return q;
+}
+const pairs=p=>p.slice(1).map((k,i)=>[p[i],k]);
+function northTip(f){if(f.sign==='none')return `${f.clue?'':''}由句子可知北方在${scrPos[f.theta/45]}。`;
+  return f.theta===0?'':`北方在${scrPos[f.theta/45]}。`}
+
+// ================= 繪圖 =================
+function arrowHead(x1,y1,x2,y2,cls,sz=16){const a=Math.atan2(y2-y1,x2-x1),l=sz,w=sz*.6;
+  return `<path class="${cls}" d="M${x2},${y2} L${x2-l*Math.cos(a)+w*Math.sin(a)},${y2-l*Math.sin(a)-w*Math.cos(a)} L${x2-l*Math.cos(a)-w*Math.sin(a)},${y2-l*Math.sin(a)+w*Math.cos(a)} Z"></path>`}
+function northArrow(x,y,theta,len=34,isNew=false){const [ax,ay]=pol(0,0,theta,len),[bx,by]=pol(0,0,theta+90,18),[tx,ty]=pol(x,y,theta,len*1.75);
+  return `<g class="nArrow${isNew?' new':''}"><line x1="${x-ax}" y1="${y-ay}" x2="${x+ax}" y2="${y+ay}"></line><line x1="${x-bx}" y1="${y-by}" x2="${x+bx}" y2="${y+by}"></line>
+    ${arrowHead(x,y,x+ax*1.4,y+ay*1.4,'',18).replace('class=""','')}<text class="nT" x="${tx}" y="${ty}">北</text></g>`}
+function needle(cx,cy,r,theta){const [tx,ty]=pol(cx,cy,theta,r*.82),[bx,by]=pol(cx,cy,theta+180,r*.82),[lx,ly]=pol(cx,cy,theta-90,r*.13),[rx,ry]=pol(cx,cy,theta+90,r*.13);
+  return `<polygon class="cRed" points="${tx},${ty} ${lx},${ly} ${rx},${ry}"></polygon><polygon class="cWhite" points="${bx},${by} ${lx},${ly} ${rx},${ry}"></polygon><circle class="cCap" cx="${cx}" cy="${cy}" r="${r*.08}"></circle>`}
+function compass(cx,cy,r,theta,dial){ // dial: undefined = 淺色指南針；數值 = 有方向字的底盤（「北」字所在角度）
+  if(dial===undefined)return `<g><circle class="cLite" cx="${cx}" cy="${cy}" r="${r}"></circle>${needle(cx,cy,r,theta)}</g>`;
+  let h=`<g><circle class="cBody" cx="${cx}" cy="${cy}" r="${r}"></circle>`;
+  for(let d=0;d<8;d++){const a=dial+d*45,[x,y]=pol(cx,cy,a,r*.68);h+=`<text class="cLbl${d===0?' n':''}" x="${x}" y="${y}" font-size="${d%2?r*.16:r*.24}" transform="rotate(${a} ${x} ${y})">${N[d]}</text>`}
+  return h+needle(cx,cy,r,theta)+'</g>'}
+function compassMini(theta){return `<svg viewBox="-60 -60 120 120">${compass(0,0,52,theta)}</svg>`}
+function sign(f,x,y,isNew){if(f.sign==='none'&&!isNew)return '';
+  if(f.sign==='compass')return compass(x,y,50,f.theta);
+  if(f.sign==='compassDial')return compass(x,y,58,f.theta,f.theta);
+  if(f.sign==='compassOff')return compass(x,y,58,f.theta,f.dial);
+  return northArrow(x,y,f.theta,34,isNew)}
+
+function drawFig(q,st){
+  const f=q.fig||(q.done&&q.anim?q.animFig:null);if(!f)return '';
+  if(f.type==='map'){const M=MAPS[f.m],U=M.U||150,xs=Object.values(M.nodes).map(n=>n[0]),ys=Object.values(M.nodes).map(n=>n[1]);
+    const W=Math.max(...xs),H=Math.max(...ys),X=k=>M.nodes[k][0]*U,Y=k=>M.nodes[k][1]*U;
+    let h='';
+    if(M.grid){const [x0,y0,x1,y1]=M.grid;for(let i=x0;i<=x1;i++)h+=`<line class="gridL" x1="${i*U}" y1="${y0*U-U/2}" x2="${i*U}" y2="${y1*U+U/2}"></line>`;
+      for(let j=y0;j<=y1;j++)h+=`<line class="gridL" x1="${x0*U-U/2}" y1="${j*U}" x2="${x1*U+U/2}" y2="${j*U}"></line>`}
+    (M.thin?['thin']:['road','road2']).forEach(c=>M.roadList.forEach(([a,b])=>{h+=`<line class="${c}" x1="${X(a)}" y1="${Y(a)}" x2="${X(b)}" y2="${Y(b)}"></line>`}));
+    (st.routes||[]).forEach((r,ri)=>{for(let i=1;i<r.p.length;i++){const a=r.p[i-1],b=r.p[i],off=(ri?1:-1)*9,x1=X(a),y1=Y(a),x2=X(b),y2=Y(b),dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ox=-dy/L*off,oy=dx/L*off;
+      h+=`<line class="rt rt${ri}" x1="${x1+ox}" y1="${y1+oy}" x2="${x2+ox}" y2="${y2+oy}"></line>`}});
+    if(f.walk){const [a,b]=f.walk,x1=X(a),y1=Y(a),x2=X(b),y2=Y(b),dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ox=-dy/L*26,oy=dx/L*26;
+      h+=`<line class="walk" x1="${x1+dx*.3+ox}" y1="${y1+dy*.3+oy}" x2="${x1+dx*.68+ox}" y2="${y1+dy*.68+oy}"></line>${arrowHead(x1+dx*.3+ox,y1+dy*.3+oy,x1+dx*.75+ox,y1+dy*.75+oy,'ahw')}`}
+    (st.arrows||[]).forEach(([a,b])=>{const x1=X(a),y1=Y(a),x2=X(b),y2=Y(b),dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),s=44/L,e=(L-56)/L;
+      h+=`<line class="arw" x1="${x1+dx*s}" y1="${y1+dy*s}" x2="${x1+dx*e}" y2="${y1+dy*e}"></line>${arrowHead(x1+dx*s,y1+dy*s,x1+dx*(L-42)/L,y1+dy*(L-42)/L,'ahd',20)}`});
+    Object.entries(M.nodes).forEach(([k,n])=>{const x=X(k),y=Y(k);
+      h+=`<g class="place ${(st.hl||{})[k]||''}" data-k="${k}"><circle cx="${x}" cy="${y}" r="36"></circle>`+
+        (n[3]?`<text class="em" x="${x}" y="${y+2}">${n[3]}</text><text class="lbl" x="${x}" y="${y+54}">${n[2]}</text>`:(st.labels||{})[k]?`<text class="lt sm" x="${x}" y="${y+2}">${st.labels[k]}</text>`:`<text class="lt" x="${x}" y="${y+2}">${n[2]}</text>`)+'</g>'});
+    const sx=W*U+130,sy=-10;
+    h+=sign(f,sx,sy+40,st.revealN);
+    const vb=`-${M.grid?U/2+40:70} -70 ${W*U+300+(M.grid?U/2-30:0)} ${H*U+150}`;
+    return `<svg viewBox="${vb}" class="${st.tapping?'tapping':''}">${h}</svg>`}
+  if(f.type==='person'){const sf=st.face??(f.theta+f.face*45);let h='';
+    for(let i=0;i<8;i++){const [x,y]=pol(0,0,i*45,150);h+=`<line class="ray" x1="0" y1="0" x2="${x}" y2="${y}"></line>`}
+    if(f.sign==='arrow'){const [x,y]=pol(0,0,f.theta,150),[x2,y2]=pol(0,0,f.theta,172),[tx,ty]=pol(0,0,f.theta,196);
+      h+=`<line class="ray" x1="0" y1="0" x2="${x2}" y2="${y2}"></line>${arrowHead(x,y,x2,y2,'',16).replace('class=""','style="fill:var(--ink)"')}<text class="nT" x="${tx}" y="${ty}">北</text>`}
+    (st.wedges||[]).forEach(w=>{const c=w.side<0?'L':'R',[ax,ay]=pol(0,0,w.from,112),[bx,by]=pol(0,0,w.to,112),[px,py]=pol(0,0,w.from,62),[qx,qy]=pol(0,0,w.to,62),[mx,my]=pol(0,0,(w.from+w.to)/2,132);
+      h+=`<path class="wedge${c}" d="M0,0 L${ax},${ay} A112,112 0 0 ${w.side>0?1:0} ${bx},${by} Z"></path><polyline class="sq${c}" points="${px},${py} ${(px+qx).toFixed(1)},${(py+qy).toFixed(1)} ${qx},${qy}"></polyline><text class="wT ${c}" x="${mx}" y="${my}">${w.label}</text>`});
+    if(st.hand){const [x1,y1]=pol(0,0,st.hand.a,52),[x2,y2]=pol(0,0,st.hand.a,118),[tx,ty]=pol(0,0,st.hand.a,150);
+      h+=`<line class="hand" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"></line>${arrowHead(x1,y1,x2+(x2-x1)*.15,y2+(y2-y1)*.15,'handH',20)}<text class="handT" x="${tx}" y="${ty}">${st.hand.t}</text>`}
+    h+=`<g transform="rotate(${sf})"><circle class="skin" r="44"></circle><path class="hair" d="M-44,0 A44,44 0 0 0 44,0 Z"></path>
+      <circle class="eye" cx="-15" cy="-20" r="5"></circle><circle class="eye" cx="15" cy="-20" r="5"></circle><path class="nose" d="M0,-46 L8,-32 L-8,-32 Z"></path></g>`;
+    if(!st.wedges||!st.wedges.length){const [lx,ly]=pol(0,0,sf+180,76);h+=`<text class="lbl" x="${lx+(Math.abs(lx)<10?60:0)}" y="${ly}">${f.name}</text>`}
+    if(st.cap)h+=`<text class="cap" x="${f.sign==='arrow'?0:30}" y="222">${st.cap}</text>`;
+    if(f.sign!=='arrow')h+=sign(f,200,-160);
+    return `<svg viewBox="-230 -230 ${f.sign==='arrow'?460:520} ${st.cap!==undefined?470:460}">${h}</svg>`}
+  if(f.type==='boxes'){let h='';const R=f.sign==='arrow'?0:72;
+    for(let i=0;i<8;i++){const a=i*45,[x1,y1]=pol(0,0,a,R||20),[x2,y2]=pol(0,0,a,150);h+=`<line class="ray" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"></line>`}
+    for(let i=0;i<8;i++){const a=i*45,[x,y]=pol(0,0,a,180),isQ=a===f.box;
+      h+=`<rect class="box${isQ?' q':''}" x="${x-50}" y="${y-24}" width="100" height="48" rx="6"></rect>`;
+      if(isQ)h+=`<text class="boxT${st.done?' ans':''}" x="${x}" y="${y+1}">${st.done?N[q.ans]:'?'}</text>`}
+    if(f.sign==='arrow')h+=northArrow(300,-150,f.theta,34);else h+=compass(0,0,R,f.theta);
+    return `<svg viewBox="-250 -250 ${f.sign==='arrow'?650:500} 500">${h}</svg>`}
+  if(f.type==='bldg'){let h='';[f.a,f.b].forEach(([n,x,y])=>{const X=x*130,Y=y*90;
+      h+=`<rect class="bld" x="${X-80}" y="${Y-45}" width="160" height="90" rx="8"></rect><text class="bldT" x="${X}" y="${Y}">${n}</text>`});
+    if(st.done)h+=compass(310,0,62,q.compassOpts[q.ans]);
+    return `<svg viewBox="-230 -170 ${st.done?630:460} 340">${h}</svg>`}
+  if(f.type==='grid'){const S=60;let h='';
+    for(let i=0;i<=f.w;i++)h+=`<line class="gridL" x1="${i*S}" y1="0" x2="${i*S}" y2="${f.h*S}"></line>`;
+    for(let j=0;j<=f.h;j++)h+=`<line class="gridL" x1="0" y1="${j*S}" x2="${f.w*S}" y2="${j*S}"></line>`;
+    const [mn,mx,my]=f.mark;h+=`<line class="mark" x1="${mx*S-11}" y1="${my*S-11}" x2="${mx*S+11}" y2="${my*S+11}"></line><line class="mark" x1="${mx*S+11}" y1="${my*S-11}" x2="${mx*S-11}" y2="${my*S+11}"></line><text class="lbl" x="${mx*S}" y="${my*S+30}">${mn}</text>`;
+    Object.entries(f.pts).forEach(([k,[x,y]])=>{h+=`<circle class="pt" cx="${x*S}" cy="${y*S}" r="7"></circle><text class="ptT" x="${x*S+20}" y="${y*S-18}">${k}</text>`});
+    h+=northArrow(f.w*S+90,40,f.theta,30);
+    return `<svg viewBox="-40 -40 ${f.w*S+200} ${f.h*S+80}">${h}</svg>`}
+  if(f.type==='pattern'){let h='';
+    for(let i=0;i<5;i++){const cx=i*130;h+=`<circle class="pool" cx="${cx}" cy="0" r="54"></circle><text class="poolT" x="${cx}" y="88">${'ABCDE'[i]}</text>`;
+      if(i===3&&!st.done)h+=`<text class="qmark" x="${cx}" y="2">?</text>`;
+      else{const a=f.a0+f.step*i;h+=`<g transform="translate(${cx},0) rotate(${a})"><path class="fish" d="M0,-40 C14,-26 14,10 0,26 L12,40 L-12,40 L0,26 C-14,10 -14,-26 0,-40 Z"></path><circle cx="-4" cy="-28" r="3" fill="#fff"></circle></g>`}}
+    return `<svg viewBox="-70 -70 660 180">${h}</svg>`}
+  return '';
+}
+
+// ================= 遊戲流程 =================
+Q.forEach(prep);
+const view=document.getElementById('view');
+let list=[],idx=0,results=[],q=null,st={};
+function menu(){
+  document.getElementById('prog').hidden=true;
+  const cnt=c=>Q.filter(x=>x.cat===c).length;
+  view.innerHTML=`<div class="menu"><p>共 ${Q.length} 題。選擇練習範圍：</p><div class="cats">
+    <button class="cat main" data-c="mix"><b>隨機挑戰</b><span>由所有題目中隨機抽 10 題</span></button>
+    ${Object.entries(CATS).map(([k,c])=>`<button class="cat" data-c="${k}"><b>${c.t}</b><span>${c.d}（${cnt(k)} 題）</span></button>`).join('')}
+    <button class="cat" data-c="all"><b>全部題目</b><span>按次序做全部 ${Q.length} 題</span></button></div></div>`;
+}
+function start(c){
+  if(c==='mix')list=shuffle(Q).slice(0,10);
+  else if(c==='all')list=Q.slice();
+  else list=shuffle(Q.filter(x=>x.cat===c));
+  idx=0;results=[];document.getElementById('prog').hidden=false;show();
+}
+function resetQ(q){q.vals={};q.act=0;q.picked=undefined;q.sel=[];q.done=false;q.res=null;q.si=0;q.picks=[]}
+function show(){animToken++;q=list[idx];resetQ(q);st={hl:{},arrows:[],labels:{},routes:q.showRoutes||[]};render()}
+function needTap(){if(q.done)return false;if(q.type==='tap'||q.type==='seq')return true;if(q.type==='mix')return q.blanks[q.act]==='p';if(q.type==='route'){const b=q.blanks[q.act];return b&&b[0]==='p'}return false}
+function dots(){document.getElementById('dots').innerHTML=list.length>24?'':list.map((_,i)=>`<i class="${results[i]===true?'ok':results[i]===false?'no':i===idx?'cur':''}"></i>`).join('');
+  document.getElementById('progTxt').textContent=`第 ${Math.min(idx+1,list.length)} / ${list.length} 題`}
+const blank=(t,cls='',i='')=>`<span class="blank ${cls}" ${i!==''?`data-i="${i}" role="button"`:''}>${t}</span>`;
+const doneB=(right,mine)=>(mine===undefined||mine===right)?blank(right,'good'):blank(`<s>${mine}</s>${right}`,'fix');
+function label(v,kind){if(v===undefined)return undefined;if(kind==='p')return nm(q.fig.m,v);return N[v]}
+function bodyText(){
+  const f=q.fig;let t=q.text;
+  if(q.type==='route'){const B=key=>{const i=q.blanks.findIndex(x=>x[1]===key),kind=key==='b'?'p':'d';
+      if(i<0)return key==='b'?nm(f.m,q.r.b):N[q.r[key]];
+      if(q.done)return doneB(label(q.res[key],kind),label(q.vals[key],kind));
+      return blank(label(q.vals[key],kind)??'？',i===q.act?'act':'',i)};
+    t=q.tpl==='none'?`嘉朗由${nm(f.m,q.A)}前往${nm(f.m,q.C)}。他先向${B('d1')}方走，到達${B('b')}後，再向${B('d2')}方走，便可到達。`
+      :`由${nm(f.m,q.A)}向${B('d1')}方走，到達${B('b')}後，再向${B('d2')}方走，便可到達${nm(f.m,q.C)}。`;
+    return t}
+  if(q.type==='seq'){const items=q.steps.map((sp,i)=>`<li class="${i<q.si?(q.picks[i]===sp.ans?'okS':'noS'):i===q.si&&!q.done?'cur':''}">${sp.say}</li>`).join('');
+    return `${q.text}<ol class="steps">${items}</ol>`}
+  if(q.type==='mix'){const res=q.done?q.res:null;let n2=0;
+    return t.replace(/\[\?\]/g,()=>{const i=n2++,kind=q.blanks[i],lab=v=>v===undefined?undefined:kind==='p'?nm(f.m,v):N[v];
+      if(q.done)return doneB(lab(res[i]),lab(q.vals[i]));return blank(lab(q.vals[i])??'？',i===q.act?'act':'',i)})}
+  let n=0;
+  return t.replace(/\[\?\]/g,()=>{const i=n++;
+    if(q.type==='dir')return q.done?doneB(N[q.ans],label(q.picked,'d')):blank('？');
+    if(q.type==='dirs'){if(q.done)return doneB(N[q.ans[i]],label(q.vals[i],'d'));return blank(q.vals[i]!==undefined?N[q.vals[i]]:'？',i===q.act?'act':'',i)}
+    if(q.type==='tap')return q.done?doneB(nm(f.m,q.ans),q.picked&&nm(f.m,q.picked)):blank('？');
+    if(q.type==='choice'){if(q.compassOpts)return '';const o=q.opts;return q.done?doneB(o[q.ans],q.picked!==undefined?o[q.picked]:undefined):blank('？')}
+    if(q.type==='pick2')return '';
+    return blank('？')});
+}
+function inputHTML(){
+  if(q.done)return '';
+  const pad=(dis)=>`<div class="pad">${[2,4,6,0,1,3,5,7].map(d=>`<button data-act="dir" data-d="${d}" ${dis?'disabled':''}>${N[d]}</button>`).join('')}</div>`;
+  if(q.type==='dir')return pad();
+  if(q.type==='dirs'){const full=q.ans.every((_,i)=>q.vals[i]!==undefined);
+    return `<p class="hint">按方向填寫空格，點空格可以修改。</p>${pad()}<div class="btns"><button class="btn main" data-act="check" ${full?'':'disabled'}>檢查答案</button></div>`}
+  if(q.type==='tap')return `<p class="hint">在圖上點選答案。</p>`;
+  if(q.type==='seq')return `<p class="hint">根據第 ${q.si+1} 句，在圖上點選「${q.steps[q.si].name}」的位置。</p>`;
+  if(q.type==='mix'){const cur=q.blanks[q.act],full=q.blanks.every((_,i)=>q.vals[i]!==undefined);
+    return `<p class="hint">${cur==='p'?'這個空格要填地方：在圖上點選。':'這個空格要填方向。'}點其他空格可以修改。</p>${cur==='p'?'':pad()}
+      <div class="btns"><button class="btn main" data-act="check" ${full?'':'disabled'}>檢查答案</button></div>`}
+  if(q.type==='choice')return `<div class="opts">${q.opts.map((o,i)=>`<button data-act="opt" data-i="${i}">${typeof o==='string'?o:`<span class="ol">${o.l}</span>${o.svg}`}</button>`).join('')}</div>`;
+  if(q.type==='pick2')return `<p class="hint">選兩個答案。</p><div class="opts">${q.opts.map((o,i)=>`<button data-act="tog" data-i="${i}" class="${q.sel.includes(i)?'sel':''}">${o}</button>`).join('')}</div>
+    <div class="btns"><button class="btn main" data-act="check" ${q.sel.length===2?'':'disabled'}>檢查答案</button></div>`;
+  if(q.type==='route'){const cur=q.blanks[q.act],full=q.blanks.every(x=>q.vals[x[1]]!==undefined);
+    return `<p class="hint">${cur[0]==='p'?'這個空格要填地方：在圖上點選。':'這個空格要填方向。'}點其他空格可以修改。</p>${cur[0]==='p'?'':pad()}
+      <div class="btns"><button class="btn main" data-act="check" ${full?'':'disabled'}>檢查答案</button></div>`}
+  return '';
+}
+function resultOpts(){
+  if(!q.done)return '';
+  if(q.type==='choice')return `<div class="opts">${q.opts.map((o,i)=>`<button disabled class="${i===q.ans?'right':i===q.picked?'wrong':''}">${typeof o==='string'?o:`<span class="ol">${o.l}</span>${o.svg}`}</button>`).join('')}</div>`;
+  if(q.type==='pick2')return `<div class="opts">${q.opts.map((o,i)=>{const k=q.optKeys[i],r=q.ansSet.includes(k);return `<button disabled class="${r?'right':q.sel.includes(i)?'wrong':''}">${o}</button>`}).join('')}</div>`;
+  return '';
+}
+function render(){
+  dots();
+  st.tapping=needTap();
+  const fig=drawFig(q,st);
+  const last=idx===list.length-1;
+  view.innerHTML=`<main class="stage ${fig?'':'nofig'}">${fig?`<div class="figWrap" id="fig">${fig}</div>`:''}
+    <section class="panel" aria-live="polite"><div class="tag">${CATS[q.cat].t}${q.hard?' · 較難':''}</div>
+    ${q.clueText?`<p class="q" style="font-size:1.25rem">${q.clueText}</p>`:''}
+    <p class="q">${bodyText()}</p>${inputHTML()}${resultOpts()}
+    ${q.done?`<p class="fb ${st.ok?'ok':'no'}">${st.ok?'答對了！':'答錯了。'}</p>${q.why?`<p class="why">${q.why}</p>`:''}
+      <div class="btns">${q.anim?'<button class="btn" data-act="replay">再看一次轉動</button>':''}<button class="btn main" data-act="next">${last?'看成績':'下一題'}</button></div>`:''}</section></main>`;
+}
+function finish(ok){q.done=true;st.ok=ok;results[idx]=ok;
+  st.arrows=q.arrows||[];if(q.type!=='seq')st.hl={};
+  if(q.type==='tap'){st.hl[q.ans]='ok';if(!ok&&q.picked)st.hl[q.picked]='bad'}
+  if(q.hl)q.hl.forEach(k=>{if(q.fig&&q.fig.type==='map'&&MAPS[q.fig.m].nodes[k])st.hl[k]='ok'});
+  if(q.type==='route'){st.arrows=[[q.A,q.res.b],[q.res.b,q.C]];st.hl[q.C]='ok'}
+  if(q.type==='pick2')q.ansSet.forEach(k=>st.hl[k]='ok');
+  if(q.fig&&q.fig.sign==='none')st.revealN=true;
+  st.done=true;render();if(q.anim)playTurn()}
+function onDir(d){
+  if(q.type==='dir'){q.picked=d;finish(d===q.ans);return}
+  if(q.type==='dirs'){q.vals[q.act]=d;const nx=q.ans.findIndex((_,i)=>q.vals[i]===undefined);if(nx>=0)q.act=nx;render();return}
+  if(q.type==='route'){const [ty,k]=q.blanks[q.act];if(ty!=='d')return;q.vals[k]=d;nextBlank();render()}
+  if(q.type==='mix'&&q.blanks[q.act]==='d'){q.vals[q.act]=d;mixNext();render()}
+}
+function mixNext(){const nx=q.blanks.findIndex((_,i)=>q.vals[i]===undefined);if(nx>=0)q.act=nx}
+function nextBlank(){const nx=q.blanks.findIndex(x=>q.vals[x[1]]===undefined);if(nx>=0)q.act=nx}
+function onTap(k){
+  if(q.type==='tap'){q.picked=k;finish(k===q.ans);return}
+  if(q.type==='mix'&&q.blanks[q.act]==='p'){q.vals[q.act]=k;st.hl={};Object.values(q.vals).forEach(v=>{if(typeof v==='string')st.hl[v]='pick'});mixNext();render();return}
+  if(q.type==='seq'){if(!isLetter(q.fig.m,k)||Object.keys(st.labels).includes(k))return;const sp=q.steps[q.si];q.picks[q.si]=k;
+    if(k!==sp.ans)st.hl[k]='bad';st.hl[sp.ans]='ok';st.labels[sp.ans]=sp.name;q.si++;
+    if(q.si>=q.steps.length){q.why=(q.why||'')+q.steps.map(x=>x.why+'。').join('');finish(q.steps.every((x,i)=>q.picks[i]===x.ans))}
+    else{render();const qq=q;setTimeout(()=>{if(q===qq&&q.si<q.steps.length&&!q.done){Object.keys(st.hl).forEach(x=>{if(st.hl[x]==='bad')delete st.hl[x]});render()}},900)}}
+  if(q.type==='route'&&q.blanks[q.act][0]==='p'){q.vals.b=k;st.hl={[k]:'pick'};nextBlank();render()}
+}
+function check(){
+  if(q.type==='mix'){const v=q.blanks.map((_,i)=>q.vals[i]);const m=q.seqs.find(sq=>sq.every((x,i)=>x===v[i]));
+    q.res=m||q.seqs.map(sq=>({sq,n:sq.filter((x,i)=>x===v[i]).length})).sort((a,b)=>b.n-a.n)[0].sq;
+    if(q.mkArrows)q.arrows=q.mkArrows(q.res);finish(!!m);return}
+  if(q.type==='dirs')finish(q.ans.every((d,i)=>q.vals[i]===d));
+  else if(q.type==='pick2'){const s=q.sel.map(i=>q.optKeys[i]);finish(s.length===2&&s.every(k=>q.ansSet.includes(k)))}
+  else if(q.type==='route'){const m=q.valid.find(x=>q.blanks.every(([t,k])=>x[k]===q.vals[k]));
+    q.res=m||q.valid.find(x=>x.b===q.vals.b)||q.r;
+    const others=q.valid.filter(x=>x!==q.res);
+    q.why=(q.why0??(q.why0=q.why||''))+(others.length?`也正確：${others.map(x=>q.blanks.map(([t,k])=>k==='b'?nm(q.fig.m,x.b):N[x[k]]+'方').join('，')).join('；或 ')}`:'');
+    finish(!!m)}
+}
+const reduceM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const wait=ms=>new Promise(r=>setTimeout(r,reduceM?Math.min(ms,150):ms));
+function tw(ms,fn){return new Promise(res=>{if(reduceM){fn(1);return res()}const t0=performance.now();const k=t=>{const e=Math.min(1,(t-t0)/ms);fn(e<.5?2*e*e:1-Math.pow(-2*e+2,2)/2);e<1?requestAnimationFrame(k):res()};requestAnimationFrame(k)})}
+function redrawFig(){const el=document.getElementById('fig');if(el)el.innerHTML=drawFig(q,st)}
+let animToken=0;
+async function playTurn(){
+  const A=q.anim,f=q.fig||q.animFig,tok=++animToken,live=()=>tok===animToken;
+  let cur=f.theta+A.face*45;st.face=cur;st.wedges=[];st.hand=null;st.cap=`開始時面向${N[A.face]}方`;redrawFig();await wait(900);
+  for(const [side,n] of A.steps){if(!live())return;st.wedges=[];
+    for(let k=1;k<=n;k++){if(!live())return;st.cap=`向${side<0?'左':'右'}轉第 ${k} 個直角`;
+      const from=cur,to=cur+side*90;await tw(700,e=>{if(live()){st.face=from+(to-from)*e;redrawFig()}});if(!live())return;
+      st.wedges.push({from,to,side,label:k});cur=to;redrawFig();await wait(450)}
+    st.cap=`向${side<0?'左':'右'}轉了 ${n} 個直角，面向${N[m8(Math.round((cur-f.theta)/45))]}方`;redrawFig();await wait(1100)}
+  if(!live())return;
+  if(A.hand){const off={L:-90,R:90,B:180}[A.hand];st.hand={a:cur+off,t:{L:'左手邊',R:'右手邊',B:'後方'}[A.hand]};
+    st.cap=`${{L:'左手邊',R:'右手邊',B:'後方'}[A.hand]}是${N[m8(Math.round((cur+off-f.theta)/45))]}方`}
+  else st.cap=`現在面向${N[m8(Math.round((cur-f.theta)/45))]}方`;
+  redrawFig();
+}
+function endScreen(){
+  document.getElementById('progTxt').textContent='完成！';dots();
+  const n=results.filter(Boolean).length,T=list.length;
+  view.innerHTML=`<div class="panel end" style="max-width:640px;margin:0 auto"><div class="tag">練習完成</div><div class="big">${n} / ${T}</div>
+    <p class="hint" style="font-size:1.15rem">${n/T>=.9?'非常好！':n/T>=.6?'不錯！再練習會更熟練。':'多練習幾次，記得先找出北方！'}</p>
+    <div class="btns"><button class="btn main" data-act="home">回到主頁</button></div></div>`;
+}
+view.addEventListener('click',e=>{
+  const c=e.target.closest('.cat');if(c){start(c.dataset.c);return}
+  const pl=e.target.closest('.place');if(pl&&q&&!q.done&&needTap()){onTap(pl.dataset.k);return}
+  const bl=e.target.closest('.blank[data-i]');if(bl&&q&&!q.done){q.act=+bl.dataset.i;render();return}
+  const b=e.target.closest('button');if(!b||b.disabled)return;const a=b.dataset.act;
+  if(a==='dir')onDir(+b.dataset.d);
+  else if(a==='opt'){q.picked=+b.dataset.i;finish(q.picked===q.ans)}
+  else if(a==='tog'){const i=+b.dataset.i;q.sel=q.sel.includes(i)?q.sel.filter(x=>x!==i):q.sel.length<2?[...q.sel,i]:q.sel;render()}
+  else if(a==='check')check();
+  else if(a==='replay')playTurn();
+  else if(a==='next'){idx++;if(idx>=list.length)endScreen();else show()}
+  else if(a==='home')menu();
+});
+document.getElementById('homeBtn').onclick=menu;
+menu();
+</script>
+
+</body>
+</html>
